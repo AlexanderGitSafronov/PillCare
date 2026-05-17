@@ -5,13 +5,16 @@ import { prisma } from "@/lib/db";
 // Sends push notifications for medications due in the past 2 minutes
 // that haven't been notified yet.
 export async function GET(req: NextRequest) {
-  // Vercel passes CRON_SECRET as Authorization: Bearer <secret>
+  // Accept auth via header (Vercel Cron) or query param (external cron services)
   const authHeader = req.headers.get("authorization");
-  if (
-    process.env.CRON_SECRET &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const querySecret = req.nextUrl.searchParams.get("secret");
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    const headerOk = authHeader === `Bearer ${secret}`;
+    const queryOk = querySecret === secret;
+    if (!headerOk && !queryOk) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
