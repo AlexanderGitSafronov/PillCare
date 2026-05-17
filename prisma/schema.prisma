@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(cuid())
+  name              String?
+  email             String?             @unique
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  language          String              @default("uk")
+  theme             String              @default("system")
+  notificationsEnabled Boolean          @default(true)
+  pushSubscription  String?
+  medications       Medication[]
+  medicationHistory MedicationHistory[]
+
+  @@map("users")
+}
+
+model Medication {
+  id          String               @id @default(cuid())
+  userId      String
+  name        String
+  dosage      String
+  unit        String               @default("мг")
+  color       String               @default("#4F8EF7")
+  icon        String               @default("pill")
+  notes       String?
+  isActive    Boolean              @default(true)
+  stock       Int?
+  lowStockAlert Int?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules   Schedule[]
+  history     MedicationHistory[]
+
+  @@map("medications")
+}
+
+model Schedule {
+  id           String      @id @default(cuid())
+  medicationId String
+  frequency    Frequency   @default(DAILY)
+  times        String[]
+  weekdays     Int[]
+  startDate    DateTime    @default(now())
+  endDate      DateTime?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  medication   Medication  @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+model MedicationHistory {
+  id           String        @id @default(cuid())
+  userId       String
+  medicationId String
+  scheduledAt  DateTime
+  takenAt      DateTime?
+  status       IntakeStatus  @default(PENDING)
+  notes        String?
+  createdAt    DateTime      @default(now())
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medication   Medication    @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@map("medication_history")
+}
+
+enum Frequency {
+  DAILY
+  TWICE_DAILY
+  THREE_TIMES_DAILY
+  WEEKLY
+  CUSTOM
+}
+
+enum IntakeStatus {
+  PENDING
+  TAKEN
+  SKIPPED
+  MISSED
+}

@@ -1,0 +1,12 @@
+import { BottomNav } from "@/components/layout/BottomNav";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <main className="max-w-lg mx-auto px-4 pt-6 pb-safe">
+        {children}
+      </main>
+      <BottomNav />
+    </div>
+  );
+}
