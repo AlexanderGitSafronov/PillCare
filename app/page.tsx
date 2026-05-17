@@ -216,7 +216,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════ HERO ════ */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden"
+        className="relative min-h-screen flex items-center justify-center overflow-hidden"
       >
         {/* Floating Emojis */}
         <FloatingIcon emoji="💊" style={{ top: "18%", left: "8%" }} delay={0} duration={4.2} />
@@ -225,11 +225,11 @@ export default function LandingPage() {
         <FloatingIcon emoji="💉" style={{ top: "12%", right: "22%" }} delay={0.3} duration={5} />
         <FloatingIcon emoji="🏥" style={{ bottom: "20%", right: "8%" }} delay={2} duration={3.6} />
         <FloatingIcon emoji="❤️" style={{ top: "55%", left: "5%" }} delay={1} duration={4.8} />
-        <FloatingIcon emoji="⏰" style={{ top: "8%", left: "40%" }} delay={0.5} duration={4} />
+        <FloatingIcon emoji="⏰" style={{ bottom: "38%", left: "6%" }} delay={0.5} duration={4} />
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="relative z-10 max-w-5xl mx-auto px-6 text-center"
+          className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-24 pb-16"
         >
           {/* Badge */}
           <motion.div

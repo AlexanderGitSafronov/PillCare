@@ -54,6 +54,7 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning className={inter.variable}>
       <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
