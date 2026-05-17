@@ -18,6 +18,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
+const ALLOWED_UNITS = [
+  "мг", "г", "мл", "краплі", "таблетки", "капсули", "МО", "мкг",
+  "mg", "g", "ml", "drops", "tablets", "capsules", "IU", "mcg",
+];
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -27,11 +32,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Validate and sanitize name (strip HTML tags)
+    const trimmedName = typeof name === "string"
+      ? name.trim().replace(/<[^>]*>/g, "").trim()
+      : "";
+    if (!trimmedName || trimmedName.length < 1) {
+      return NextResponse.json({ error: "Name must be at least 1 character" }, { status: 400 });
+    }
+    if (trimmedName.length > 100) {
+      return NextResponse.json({ error: "Name must not exceed 100 characters" }, { status: 400 });
+    }
+
+    // Validate dosage
+    const dosageNum = parseFloat(String(dosage));
+    if (isNaN(dosageNum) || dosageNum <= 0) {
+      return NextResponse.json({ error: "Dosage must be a positive number" }, { status: 400 });
+    }
+    if (dosageNum > 99999) {
+      return NextResponse.json({ error: "Dosage must not exceed 99999" }, { status: 400 });
+    }
+
+    // Validate notes
+    if (notes !== undefined && notes !== null) {
+      if (typeof notes !== "string" || notes.length > 500) {
+        return NextResponse.json({ error: "Notes must not exceed 500 characters" }, { status: 400 });
+      }
+    }
+
+    // Validate color
+    if (color !== undefined && color !== null) {
+      if (!/^#[0-9A-Fa-f]{6}$/.test(String(color))) {
+        return NextResponse.json({ error: "Color must be a valid hex color (e.g. #4F8EF7)" }, { status: 400 });
+      }
+    }
+
+    // Validate unit
+    if (unit !== undefined && unit !== null) {
+      if (!ALLOWED_UNITS.includes(String(unit))) {
+        return NextResponse.json(
+          { error: `Unit must be one of: ${ALLOWED_UNITS.join(", ")}` },
+          { status: 400 }
+        );
+      }
+    }
+
     const medication = await prisma.medication.create({
       data: {
         userId,
-        name,
-        dosage: String(dosage),
+        name: trimmedName,
+        dosage: String(dosageNum),
         unit: unit ?? "мг",
         color: color ?? "#4F8EF7",
         notes: notes ?? null,

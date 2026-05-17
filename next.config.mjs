@@ -6,6 +6,15 @@ const nextConfig = {
   images: {
     remotePatterns: [],
   },
+  headers: async () => [
+    {
+      source: "/(.*)",
+      headers: [
+        { key: "X-DNS-Prefetch-Control", value: "on" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+      ],
+    },
+  ],
 };
 
 const pwaConfig = withPWA({

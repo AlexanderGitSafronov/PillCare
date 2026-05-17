@@ -23,14 +23,29 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const body = await req.json();
     const { name, dosage, unit, color, notes, stock, schedule } = body;
 
+    const safeName = typeof name === "string"
+      ? name.trim().replace(/<[^>]*>/g, "").trim()
+      : undefined;
+    const safeNotes = typeof notes === "string"
+      ? notes.trim().replace(/<[^>]*>/g, "").slice(0, 500) || null
+      : null;
+    const dosageNum = parseFloat(String(dosage));
+
+    if (!safeName || safeName.length < 1 || safeName.length > 100) {
+      return NextResponse.json({ error: "Invalid name" }, { status: 400 });
+    }
+    if (isNaN(dosageNum) || dosageNum <= 0 || dosageNum > 99999) {
+      return NextResponse.json({ error: "Invalid dosage" }, { status: 400 });
+    }
+
     const medication = await prisma.medication.update({
       where: { id },
       data: {
-        name,
-        dosage: String(dosage),
+        name: safeName,
+        dosage: String(dosageNum),
         unit,
         color,
-        notes: notes ?? null,
+        notes: safeNotes,
         stock: stock ?? null,
       },
     });

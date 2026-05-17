@@ -7,6 +7,7 @@ import { translations } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import type { Language } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/toaster";
+import { CookieConsent } from "@/components/ui/cookie-consent";
 
 function I18nProvider({ children }: { children: React.ReactNode }) {
   const { language, setLanguage } = useAppStore();
@@ -47,6 +48,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <I18nProvider>
         {children}
+        <CookieConsent />
         <Toaster />
       </I18nProvider>
     </ThemeProvider>

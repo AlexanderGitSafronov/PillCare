@@ -235,7 +235,7 @@ export default function DashboardPage() {
         </motion.div>
       ) : (
         <div className="space-y-3">
-          {data!.todayMeds.map((med, i) => (
+          {data?.todayMeds.map((med, i) => (
             <motion.div
               key={med.historyId}
               initial={{ opacity: 0, y: 20 }}

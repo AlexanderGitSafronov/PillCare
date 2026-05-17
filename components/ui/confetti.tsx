@@ -5,12 +5,19 @@ import { motion } from "framer-motion";
 
 const COLORS = ["#4F8EF7", "#34C759", "#FF9500", "#FF3B30", "#AF52DE", "#FFCC00"];
 
+interface PieceData {
+  id: number;
+  x: number;
+  color: string;
+  delay: number;
+}
+
 function ConfettiPiece({ x, color, delay }: { x: number; color: string; delay: number }) {
   return (
     <motion.div
       initial={{ y: -20, x, opacity: 1, rotate: 0, scale: 1 }}
       animate={{
-        y: window.innerHeight + 100,
+        y: typeof window !== "undefined" ? window.innerHeight + 100 : 900,
         x: x + (Math.random() - 0.5) * 200,
         opacity: 0,
         rotate: Math.random() * 720 - 360,
@@ -24,14 +31,18 @@ function ConfettiPiece({ x, color, delay }: { x: number; color: string; delay: n
 }
 
 export function ConfettiEffect() {
-  const [pieces] = useState(() =>
-    Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 400),
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      delay: Math.random() * 0.5,
-    }))
-  );
+  const [pieces, setPieces] = useState<PieceData[]>([]);
+
+  useEffect(() => {
+    setPieces(
+      Array.from({ length: 40 }, (_, i) => ({
+        id: i,
+        x: Math.random() * window.innerWidth,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        delay: Math.random() * 0.5,
+      }))
+    );
+  }, []);
 
   return (
     <>
