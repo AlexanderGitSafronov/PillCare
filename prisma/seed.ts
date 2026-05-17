@@ -3,10 +3,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.upsert({
-    where: { email: "demo@pillcare.app" },
-    update: {},
-    create: {
+  // Clean up existing demo user (different ID from previous seed)
+  await prisma.user.deleteMany({ where: { email: "demo@pillcare.app" } });
+
+  const user = await prisma.user.create({
+    data: {
+      id: "demo-user-001",
       email: "demo@pillcare.app",
       name: "Демо Користувач",
       language: "uk",
