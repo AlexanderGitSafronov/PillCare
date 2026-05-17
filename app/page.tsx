@@ -159,7 +159,7 @@ export default function LandingPage() {
           {/* CTA */}
           <div className="flex items-center gap-3">
             <Link
-              href="/dashboard"
+              href="/login"
               className="hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold text-white shadow-lg transition-all hover:shadow-blue-500/40 hover:scale-105"
               style={{
                 background: "linear-gradient(135deg, #4F8EF7, #7C3AED)",
@@ -203,7 +203,7 @@ export default function LandingPage() {
               </a>
             ))}
             <Link
-              href="/dashboard"
+              href="/login"
               className="inline-flex justify-center items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white"
               style={{ background: "linear-gradient(135deg, #4F8EF7, #7C3AED)" }}
             >
@@ -283,7 +283,7 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
             <Link
-              href="/dashboard"
+              href="/login"
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-bold text-white transition-all hover:scale-105"
               style={{
                 background: "linear-gradient(135deg, #4F8EF7, #7C3AED)",
@@ -919,7 +919,7 @@ export default function LandingPage() {
               </ul>
 
               <Link
-                href="/dashboard"
+                href="/login"
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-base font-bold text-white transition-all hover:scale-[1.02]"
                 style={{
                   background: "linear-gradient(135deg, #4F8EF7, #7C3AED)",
@@ -970,7 +970,7 @@ export default function LandingPage() {
                 Приєднуйтесь до тисяч користувачів, які вже дбають про своє здоров'я разом із PillCare.
               </p>
               <Link
-                href="/dashboard"
+                href="/login"
                 className="inline-flex items-center gap-2 px-10 py-4 rounded-full text-base font-bold text-slate-900 transition-all hover:scale-105"
                 style={{
                   background: "linear-gradient(135deg, #ffffff, #e2e8f0)",

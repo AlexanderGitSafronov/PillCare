@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/session";
 import { kyivDayBoundsFromDateStr, formatKyivTime } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const date = req.nextUrl.searchParams.get("date");
   const limit = parseInt(req.nextUrl.searchParams.get("limit") ?? "50");
-
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
   try {
     const where: Record<string, unknown> = { userId };

@@ -15,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
 import { MED_COLORS } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -37,7 +36,6 @@ interface MedFormProps {
 
 export function MedForm({ initialData, onSuccess, onCancel }: MedFormProps) {
   const { t } = useI18n();
-  const { userId } = useAppStore();
 
   const schedule = initialData?.schedules?.[0];
 
@@ -102,7 +100,6 @@ export function MedForm({ initialData, onSuccess, onCancel }: MedFormProps) {
     setSaving(true);
     try {
       const body = {
-        userId,
         name: form.name,
         dosage: form.dosage,
         unit: form.unit,

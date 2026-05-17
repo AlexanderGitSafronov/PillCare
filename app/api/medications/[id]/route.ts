@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/session";
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(_: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
     const medication = await prisma.medication.findUnique({
@@ -11,6 +15,7 @@ export async function GET(_: NextRequest, { params }: Params) {
       include: { schedules: { where: { isActive: true } } },
     });
     if (!medication) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (medication.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     return NextResponse.json(medication);
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
@@ -18,6 +23,9 @@ export async function GET(_: NextRequest, { params }: Params) {
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
     const body = await req.json();
@@ -37,6 +45,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (isNaN(dosageNum) || dosageNum <= 0 || dosageNum > 99999) {
       return NextResponse.json({ error: "Invalid dosage" }, { status: 400 });
     }
+
+    // Check ownership
+    const existing = await prisma.medication.findUnique({ where: { id } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (existing.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const medication = await prisma.medication.update({
       where: { id },
@@ -69,9 +82,17 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: Params) {
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
+    // Check ownership
+    const existing = await prisma.medication.findUnique({ where: { id } });
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (existing.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     await prisma.medication.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch {

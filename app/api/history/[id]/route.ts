@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/session";
 
 type Params = { params: Promise<{ id: string }> };
 
 const ALLOWED_STATUSES = ["TAKEN", "SKIPPED", "MISSED", "PENDING"] as const;
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
     const body = await req.json();
@@ -42,7 +46,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function POST(_: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: Params) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
     const updated = await prisma.medicationHistory.update({

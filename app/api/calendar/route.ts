@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/session";
 import { parseISO, eachDayOfInterval, format } from "date-fns";
 import { kyivDayBoundsFromDateStr, getKyivDateStr } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const from = req.nextUrl.searchParams.get("from");
   const to = req.nextUrl.searchParams.get("to");
 
-  if (!userId || !from || !to) {
-    return NextResponse.json({ error: "userId, from, to required" }, { status: 400 });
+  if (!from || !to) {
+    return NextResponse.json({ error: "from and to required" }, { status: 400 });
   }
 
   try {

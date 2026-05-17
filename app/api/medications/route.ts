@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/session";
 import { getKyivDateStr, kyivTimeToUTC } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const medications = await prisma.medication.findMany({
@@ -25,11 +26,14 @@ const ALLOWED_UNITS = [
 ];
 
 export async function POST(req: NextRequest) {
+  const userId = await getSessionUserId(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const body = await req.json();
-    const { userId, name, dosage, unit, color, notes, stock, schedule } = body;
+    const { name, dosage, unit, color, notes, stock, schedule } = body;
 
-    if (!userId || !name || !dosage) {
+    if (!name || !dosage) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 

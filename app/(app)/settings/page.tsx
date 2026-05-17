@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sun, Moon, Monitor, Bell, BellOff, Globe, Info, ChevronRight } from "lucide-react";
+import { Sun, Moon, Monitor, Bell, BellOff, Globe, Info, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,11 +36,18 @@ const LANGUAGES: Language[] = ["uk", "ru", "en"];
 export default function SettingsPage() {
   const { t } = useI18n();
   const { setTheme: setNextTheme, theme: currentTheme } = useTheme();
-  const { language, setLanguage, notificationsEnabled, setNotificationsEnabled, userId } = useAppStore();
+  const { language, setLanguage, notificationsEnabled, setNotificationsEnabled } = useAppStore();
+  const router = useRouter();
   const [userName, setUserName] = useState("");
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(
     typeof Notification !== "undefined" ? Notification.permission : null
   );
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
 
   const handleRequestNotifications = async () => {
     if (!("Notification" in window)) {
@@ -65,7 +73,7 @@ export default function SettingsPage() {
         await fetch("/api/notifications/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, subscription }),
+          body: JSON.stringify({ subscription }),
         });
       }
       setNotificationsEnabled(true);
@@ -237,6 +245,18 @@ export default function SettingsPage() {
                   <span className="font-medium">PillCare PWA</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Logout */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <Card>
+            <CardContent className="p-5">
+              <Button variant="destructive" className="w-full gap-2" onClick={handleLogout}>
+                <LogOut className="w-4 h-4" />
+                Вийти з акаунту
+              </Button>
             </CardContent>
           </Card>
         </motion.div>

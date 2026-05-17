@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken, COOKIE_NAME } from "./lib/auth";
 
 // ---------------------------------------------------------------------------
 // In-memory rate-limit store: IP → { count, windowStart }
@@ -40,13 +41,43 @@ const CSP =
   "frame-ancestors 'none'";
 
 // ---------------------------------------------------------------------------
+// Protected and auth-only routes
+// ---------------------------------------------------------------------------
+const PROTECTED = ["/dashboard", "/medications", "/calendar", "/history", "/settings"];
+const AUTH_PAGES = ["/login", "/register"];
+
+// ---------------------------------------------------------------------------
 // Proxy
 // ---------------------------------------------------------------------------
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, method } = Object.assign(request.nextUrl, {
     method: request.method,
   });
   const isProduction = process.env.NODE_ENV === "production";
+
+  // ---- Auth guard for protected routes ------------------------------------
+  if (PROTECTED.some((p) => pathname.startsWith(p))) {
+    const token = request.cookies.get(COOKIE_NAME)?.value;
+    if (!token) return NextResponse.redirect(new URL("/login", request.url));
+    try {
+      await verifyToken(token);
+    } catch {
+      const res = NextResponse.redirect(new URL("/login", request.url));
+      res.cookies.delete(COOKIE_NAME);
+      return res;
+    }
+  }
+
+  // ---- Redirect already-logged-in users away from auth pages -------------
+  if (AUTH_PAGES.some((p) => pathname === p)) {
+    const token = request.cookies.get(COOKIE_NAME)?.value;
+    if (token) {
+      try {
+        await verifyToken(token);
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      } catch {}
+    }
+  }
 
   // ---- Rate limiting for /api/* routes ------------------------------------
   if (pathname.startsWith("/api/")) {

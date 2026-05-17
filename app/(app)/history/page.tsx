@@ -5,10 +5,9 @@ import { motion } from "framer-motion";
 import { format, parseISO } from "date-fns";
 import { CheckCircle2, XCircle, Clock, SkipForward } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
 import { getDateLocale, formatRelativeDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,6 @@ const STATUS_COLORS = {
 
 export default function HistoryPage() {
   const { t, lang } = useI18n();
-  const { userId } = useAppStore();
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -47,7 +45,7 @@ export default function HistoryPage() {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/history?userId=${userId}&limit=100`);
+        const res = await fetch("/api/history?limit=100");
         if (res.ok) {
           const data = await res.json();
           setItems(data.items || []);
@@ -59,7 +57,7 @@ export default function HistoryPage() {
       }
     };
     fetchHistory();
-  }, [userId]);
+  }, []);
 
   const filtered = items.filter((item) => {
     if (filter === "all") return true;

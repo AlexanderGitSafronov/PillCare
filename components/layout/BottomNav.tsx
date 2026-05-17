@@ -20,7 +20,7 @@ export function BottomNav() {
   const { t } = useI18n();
 
   return (
-    <nav className="bottom-nav z-40">
+    <nav className="bottom-nav z-40 lg:hidden">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -53,7 +53,7 @@ export function BottomNav() {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
               </div>
-              <span className="text-[10px] font-medium leading-none">
+              <span className="text-xs font-medium leading-none">
                 {t.nav[item.key]}
               </span>
             </Link>

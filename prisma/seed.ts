@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -6,11 +7,14 @@ async function main() {
   // Clean up existing demo user (different ID from previous seed)
   await prisma.user.deleteMany({ where: { email: "demo@pillcare.app" } });
 
+  const hashedPassword = await bcrypt.hash("demo123", 10);
+
   const user = await prisma.user.create({
     data: {
       id: "demo-user-001",
       email: "demo@pillcare.app",
       name: "Демо Користувач",
+      password: hashedPassword,
       language: "uk",
       theme: "system",
       notificationsEnabled: true,
@@ -102,7 +106,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Seed completed:", { user: user.email, medications: [med1.name, med2.name, med3.name] });
+  console.log("Seed completed:", { user: user.email, medications: [med1.name, med2.name, med3.name] });
 }
 
 main()

@@ -10,7 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
 import { getDateLocale, getStreakMessage } from "@/lib/utils";
 import { MedTodayCard } from "@/components/medications/MedTodayCard";
 import { ConfettiEffect } from "@/components/ui/confetti";
@@ -54,14 +53,13 @@ function getGreeting(lang: string): string {
 
 export default function DashboardPage() {
   const { t, lang } = useI18n();
-  const { userId } = useAppStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
   const fetchDashboard = async () => {
     try {
-      const res = await fetch(`/api/dashboard?userId=${userId}`);
+      const res = await fetch("/api/dashboard");
       if (res.ok) {
         const d = await res.json();
         setData(d);
@@ -83,7 +81,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboard();
-  }, [userId]);
+  }, []);
 
   const handleMarkTaken = async (historyId: string) => {
     try {

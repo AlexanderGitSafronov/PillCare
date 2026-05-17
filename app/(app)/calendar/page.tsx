@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
-  isSameDay, isToday, getDay, startOfWeek, addMonths, subMonths,
+  isSameDay, isToday, getDay, addMonths, subMonths,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
 import { getDateLocale } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +35,6 @@ interface DayEvent {
 
 export default function CalendarPage() {
   const { t, lang } = useI18n();
-  const { userId } = useAppStore();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [monthStats, setMonthStats] = useState<DayStats[]>([]);
@@ -52,7 +50,7 @@ export default function CalendarPage() {
       try {
         const from = format(startOfMonth(currentMonth), "yyyy-MM-dd");
         const to = format(endOfMonth(currentMonth), "yyyy-MM-dd");
-        const res = await fetch(`/api/calendar?userId=${userId}&from=${from}&to=${to}`);
+        const res = await fetch(`/api/calendar?from=${from}&to=${to}`);
         if (res.ok) setMonthStats(await res.json());
       } catch {
         setMonthStats([]);
@@ -61,14 +59,14 @@ export default function CalendarPage() {
       }
     };
     fetchStats();
-  }, [currentMonth, userId]);
+  }, [currentMonth]);
 
   useEffect(() => {
     const fetchDay = async () => {
       setLoadingEvents(true);
       try {
         const date = format(selectedDay, "yyyy-MM-dd");
-        const res = await fetch(`/api/history?userId=${userId}&date=${date}`);
+        const res = await fetch(`/api/history?date=${date}`);
         if (res.ok) {
           const data = await res.json();
           setDayEvents(data.items || []);
@@ -80,7 +78,7 @@ export default function CalendarPage() {
       }
     };
     fetchDay();
-  }, [selectedDay, userId]);
+  }, [selectedDay]);
 
   const days = eachDayOfInterval({
     start: startOfMonth(currentMonth),

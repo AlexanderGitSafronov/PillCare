@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MedCard } from "@/components/medications/MedCard";
 import { useI18n } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
 
 interface Medication {
   id: string;
@@ -28,14 +27,13 @@ interface Medication {
 
 export default function MedicationsPage() {
   const { t } = useI18n();
-  const { userId } = useAppStore();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchMedications = async () => {
     try {
-      const res = await fetch(`/api/medications?userId=${userId}`);
+      const res = await fetch("/api/medications");
       if (res.ok) {
         const data = await res.json();
         setMedications(data);
@@ -49,7 +47,7 @@ export default function MedicationsPage() {
 
   useEffect(() => {
     fetchMedications();
-  }, [userId]);
+  }, []);
 
   const handleDelete = async (id: string) => {
     try {
