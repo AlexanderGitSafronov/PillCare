@@ -40,9 +40,9 @@ const CSP =
   "frame-ancestors 'none'";
 
 // ---------------------------------------------------------------------------
-// Middleware
+// Proxy
 // ---------------------------------------------------------------------------
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, method } = Object.assign(request.nextUrl, {
     method: request.method,
   });
