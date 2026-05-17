@@ -17,6 +17,13 @@ import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import type { Language } from "@/lib/i18n";
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
 const THEMES = [
   { id: "light", icon: Sun, labelKey: "themeLight" as const },
   { id: "dark", icon: Moon, labelKey: "themeDark" as const },
@@ -28,7 +35,7 @@ const LANGUAGES: Language[] = ["uk", "ru", "en"];
 export default function SettingsPage() {
   const { t } = useI18n();
   const { setTheme: setNextTheme, theme: currentTheme } = useTheme();
-  const { language, setLanguage, notificationsEnabled, setNotificationsEnabled } = useAppStore();
+  const { language, setLanguage, notificationsEnabled, setNotificationsEnabled, userId } = useAppStore();
   const [userName, setUserName] = useState("");
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(
     typeof Notification !== "undefined" ? Notification.permission : null
@@ -41,11 +48,33 @@ export default function SettingsPage() {
     }
     const permission = await Notification.requestPermission();
     setNotifPermission(permission);
-    if (permission === "granted") {
+    if (permission !== "granted") {
+      toast({ title: t.settings.permissionDenied, variant: "destructive" });
+      return;
+    }
+
+    try {
+      // Register push subscription via service worker
+      if ("serviceWorker" in navigator && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+        const sw = await navigator.serviceWorker.ready;
+        const existing = await sw.pushManager.getSubscription();
+        const subscription = existing ?? await sw.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+        });
+        await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, subscription }),
+        });
+      }
       setNotificationsEnabled(true);
       toast({ title: t.settings.permissionGranted, variant: "default" });
-    } else {
-      toast({ title: t.settings.permissionDenied, variant: "destructive" });
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+      // Permission was granted but subscription failed — still mark enabled
+      setNotificationsEnabled(true);
+      toast({ title: t.settings.permissionGranted, variant: "default" });
     }
   };
 

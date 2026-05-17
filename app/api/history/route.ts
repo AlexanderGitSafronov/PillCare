@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { startOfDay, endOfDay, parseISO } from "date-fns";
-import { format } from "date-fns";
+import { kyivDayBoundsFromDateStr, formatKyivTime } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -11,11 +10,12 @@ export async function GET(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
   try {
-    const where: any = { userId };
+    const where: Record<string, unknown> = { userId };
 
     if (date) {
-      const parsed = parseISO(date);
-      where.scheduledAt = { gte: startOfDay(parsed), lte: endOfDay(parsed) };
+      // date is "YYYY-MM-DD" in Kyiv timezone from the client
+      const { start, end } = kyivDayBoundsFromDateStr(date);
+      where.scheduledAt = { gte: start, lte: end };
     }
 
     const items = await prisma.medicationHistory.findMany({
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       scheduledAt: item.scheduledAt.toISOString(),
       takenAt: item.takenAt?.toISOString() ?? null,
       status: item.status,
-      time: format(item.scheduledAt, "HH:mm"),
+      time: formatKyivTime(item.scheduledAt), // HH:mm in Kyiv timezone
     }));
 
     return NextResponse.json({ items: formatted, total: formatted.length });

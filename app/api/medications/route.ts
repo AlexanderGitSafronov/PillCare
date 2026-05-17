@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getKyivDateStr, kyivTimeToUTC } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -98,14 +99,12 @@ export async function POST(req: NextRequest) {
       include: { schedules: true },
     });
 
-    // Create initial history entries for today
+    // Create initial history entries for today (Kyiv time)
     if (schedule?.times?.length > 0) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const kyivDateStr = getKyivDateStr(now);
       const historyEntries = schedule.times.map((time: string) => {
-        const [h, m] = time.split(":").map(Number);
-        const scheduledAt = new Date(today);
-        scheduledAt.setHours(h, m, 0, 0);
+        const scheduledAt = kyivTimeToUTC(kyivDateStr, time);
         return { userId, medicationId: medication.id, scheduledAt, status: "PENDING" as const };
       });
       await prisma.medicationHistory.createMany({ data: historyEntries });

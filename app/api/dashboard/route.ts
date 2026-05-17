@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { startOfDay, endOfDay } from "date-fns";
+import {
+  getKyivDateStr,
+  getKyivDayBoundsUTC,
+  getKyivDayOfWeek,
+  kyivTimeToUTC,
+} from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -8,10 +13,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const now = new Date();
-    const todayStart = startOfDay(now);
-    const todayEnd = endOfDay(now);
+    const { start: todayStart, end: todayEnd } = getKyivDayBoundsUTC(now);
 
-    // Get today's history
+    // Get today's history (Kyiv day bounds)
     const todayHistory = await prisma.medicationHistory.findMany({
       where: {
         userId,
@@ -32,22 +36,23 @@ export async function GET(req: NextRequest) {
         include: { schedules: { where: { isActive: true } } },
       });
 
+      const kyivDateStr = getKyivDateStr(now);
+      const dayOfWeek = getKyivDayOfWeek(now);
       const toCreate = [];
+
       for (const med of medications) {
         for (const sched of med.schedules) {
-          const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
           const shouldRun =
             sched.frequency === "DAILY" ||
             sched.frequency === "TWICE_DAILY" ||
             sched.frequency === "THREE_TIMES_DAILY" ||
             (sched.frequency === "WEEKLY" && sched.weekdays.includes(dayOfWeek)) ||
-            (sched.frequency === "CUSTOM" && (sched.weekdays.length === 0 || sched.weekdays.includes(dayOfWeek)));
+            (sched.frequency === "CUSTOM" &&
+              (sched.weekdays.length === 0 || sched.weekdays.includes(dayOfWeek)));
 
           if (shouldRun) {
             for (const time of sched.times) {
-              const [h, m] = time.split(":").map(Number);
-              const scheduledAt = new Date(todayStart);
-              scheduledAt.setHours(h, m, 0, 0);
+              const scheduledAt = kyivTimeToUTC(kyivDateStr, time);
               const isPast = scheduledAt < now;
               toCreate.push({
                 userId,
@@ -62,7 +67,6 @@ export async function GET(req: NextRequest) {
 
       if (toCreate.length > 0) {
         await prisma.medicationHistory.createMany({ data: toCreate, skipDuplicates: true });
-        // Refetch
         return GET(req);
       }
     } else {
@@ -84,22 +88,22 @@ export async function GET(req: NextRequest) {
     const missed = todayHistory.filter((h) => h.status === "MISSED").length;
     const pending = todayHistory.filter((h) => h.status === "PENDING").length;
 
-    // Calculate streak
+    // Calculate streak (check previous Kyiv days)
     let streak = 0;
-    const checkDate = new Date(todayStart);
+    let checkDate = new Date(now.getTime() - 24 * 60 * 60 * 1000); // yesterday
     while (true) {
-      checkDate.setDate(checkDate.getDate() - 1);
+      const { start, end } = getKyivDayBoundsUTC(checkDate);
       const dayHistory = await prisma.medicationHistory.findMany({
-        where: {
-          userId,
-          scheduledAt: { gte: startOfDay(checkDate), lte: endOfDay(checkDate) },
-        },
+        where: { userId, scheduledAt: { gte: start, lte: end } },
       });
       if (dayHistory.length === 0) break;
-      const allTaken = dayHistory.every((h) => h.status === "TAKEN" || h.status === "SKIPPED");
+      const allTaken = dayHistory.every(
+        (h) => h.status === "TAKEN" || h.status === "SKIPPED"
+      );
       if (!allTaken) break;
       streak++;
       if (streak > 365) break;
+      checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000);
     }
 
     const todayMeds = todayHistory.map((h) => ({

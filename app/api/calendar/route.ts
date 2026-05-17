@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { startOfDay, endOfDay, parseISO, eachDayOfInterval, format } from "date-fns";
+import { parseISO, eachDayOfInterval, format } from "date-fns";
+import { kyivDayBoundsFromDateStr, getKyivDateStr } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -12,25 +13,24 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const fromDate = parseISO(from);
-    const toDate = parseISO(to);
+    // from/to are Kyiv date strings "YYYY-MM-DD" from the client
+    const { start: rangeStart } = kyivDayBoundsFromDateStr(from);
+    const { end: rangeEnd } = kyivDayBoundsFromDateStr(to);
 
     const history = await prisma.medicationHistory.findMany({
       where: {
         userId,
-        scheduledAt: {
-          gte: startOfDay(fromDate),
-          lte: endOfDay(toDate),
-        },
+        scheduledAt: { gte: rangeStart, lte: rangeEnd },
       },
       select: { scheduledAt: true, status: true },
     });
 
-    const days = eachDayOfInterval({ start: fromDate, end: toDate });
+    // Iterate over Kyiv calendar days in the range
+    const days = eachDayOfInterval({ start: parseISO(from), end: parseISO(to) });
     const stats = days.map((day) => {
-      const key = format(day, "yyyy-MM-dd");
+      const key = format(day, "yyyy-MM-dd"); // Kyiv date string
       const dayItems = history.filter(
-        (h) => format(h.scheduledAt, "yyyy-MM-dd") === key
+        (h) => getKyivDateStr(h.scheduledAt) === key
       );
       return {
         date: key,
